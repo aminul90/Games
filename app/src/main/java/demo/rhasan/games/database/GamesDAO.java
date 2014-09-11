@@ -64,7 +64,7 @@ public class GamesDAO {
         cursor.close();
 
         /*
-
+        *
          */
         if (mObserver != null) {
             mObserver.onContentChanged();
