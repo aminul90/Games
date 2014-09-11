@@ -63,6 +63,9 @@ public class GamesDAO {
         Game newGame = getGame(cursor);
         cursor.close();
 
+        /*
+
+         */
         if (mObserver != null) {
             mObserver.onContentChanged();
         }
