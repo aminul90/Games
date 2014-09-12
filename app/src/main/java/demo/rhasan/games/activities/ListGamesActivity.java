@@ -101,7 +101,7 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
     }
 
     private void showAddGameForm() {
-        View layout = LayoutInflater.from(this).inflate(R.layout.form_add_game, (ViewGroup) findViewById(R.id.fl_list_games_root), false);
+        final View layout = LayoutInflater.from(this).inflate(R.layout.form_add_game, (ViewGroup) findViewById(R.id.fl_list_games_root), false);
         initializeFormlayout(layout);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -109,11 +109,11 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
         builder.setPositiveButton(getString(R.string.add), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                EditText icon = (EditText) mFormDialog.findViewById(R.id.et_form_game_icon);
-                EditText name = (EditText) mFormDialog.findViewById(R.id.et_form_game_name);
-                Spinner console = (Spinner) mFormDialog.findViewById(R.id.spin_form_game_console);
-                CheckBox finished = (CheckBox) mFormDialog.findViewById(R.id.cb_form_game_finished);
-                RatingBar rating = (RatingBar) mFormDialog.findViewById(R.id.rb_form_game_rating);
+                EditText icon = (EditText) layout.findViewById(R.id.et_form_game_icon);
+                EditText name = (EditText) layout.findViewById(R.id.et_form_game_name);
+                Spinner console = (Spinner) layout.findViewById(R.id.spin_form_game_console);
+                CheckBox finished = (CheckBox) layout.findViewById(R.id.cb_form_game_finished);
+                RatingBar rating = (RatingBar) layout.findViewById(R.id.rb_form_game_rating);
 
 
                 Game game = new Game();
@@ -198,6 +198,90 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
         updateGameFromFragment(game);
     }
 
+    @Override
+    public void onLongGameItemClick(final AdapterView<?> adapterView, final View view, final int i, final long l) {
+        showEditGameForm((Game) adapterView.getItemAtPosition(i));
+    }
+
+    private void showEditGameForm(final Game game) {
+        final View layout = LayoutInflater.from(this).inflate(R.layout.form_add_game, (ViewGroup) findViewById(R.id.fl_list_games_root), false);
+        initializeFormlayoutData(layout, game);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setView(layout);
+        builder.setPositiveButton(getString(R.string.save), new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                EditText icon = (EditText) layout.findViewById(R.id.et_form_game_icon);
+                EditText name = (EditText) layout.findViewById(R.id.et_form_game_name);
+                Spinner console = (Spinner) layout.findViewById(R.id.spin_form_game_console);
+                CheckBox finished = (CheckBox) layout.findViewById(R.id.cb_form_game_finished);
+                RatingBar rating = (RatingBar) layout.findViewById(R.id.rb_form_game_rating);
+
+                Game game = new Game();
+                game.setName(name.getText().toString());
+                game.setConsole((String) console.getSelectedItem());
+                game.setIsFinished(finished.isChecked());
+                game.setRating(rating.getRating());
+
+                if (icon.getText() != null &&
+                        !icon.getText().toString().isEmpty()) {
+                    if (icon.getTag() != null) {
+                        game.setIcon((Uri) icon.getTag());
+                    }
+                }
+
+                addGameToFragment(game);
+                dialog.dismiss();
+
+                showGames();
+            }
+        });
+
+        mFormDialog = builder.create();
+        mFormDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(final DialogInterface dialogInterface) {
+                showGames();
+            }
+        });
+
+        Window window = mFormDialog.getWindow();
+        WindowManager.LayoutParams wlp = window.getAttributes();
+
+        wlp.gravity = Gravity.CENTER;
+        wlp.flags &= ~WindowManager.LayoutParams.FLAG_DIM_BEHIND;
+        window.setAttributes(wlp);
+
+        mFormDialog.show();
+    }
+
+    private void initializeFormlayoutData(final View layout, Game game) {
+        EditText icon = (EditText) layout.findViewById(R.id.et_form_game_icon);
+        EditText name = (EditText) layout.findViewById(R.id.et_form_game_name);
+        Spinner console = (Spinner) layout.findViewById(R.id.spin_form_game_console);
+        CheckBox finished = (CheckBox) layout.findViewById(R.id.cb_form_game_finished);
+        RatingBar rating = (RatingBar) layout.findViewById(R.id.rb_form_game_rating);
+
+        if (game.getIcon() != null)
+            icon.setText(game.getIcon().getPath());
+
+        if (game.getName() != null)
+            name.setText(game.getName());
+
+        if (game.getConsole() != null) {
+            String[] spinnerArr = getResources().getStringArray(R.array.spinner_game_console_entries);
+            if (game.getConsole().equals(spinnerArr[0])) {
+                console.setSelection(0);
+            } else if (game.getConsole().equals(spinnerArr[1])) {
+                console.setSelection(1);
+            } else {
+                console.setSelection(2);
+            }
+        }
+
+    }
+
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (resultCode != RESULT_OK) return;
 
@@ -215,11 +299,10 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
 
     private void onIconUpload(final Uri imagePath) {
         EditText icon = (EditText) mFormDialog.findViewById(R.id.et_form_game_icon);
-
-        // so users don't set default paths
-        icon.setMaxLines(0);
-
+        icon.setFocusable(true);
         icon.setText(imagePath.getPath());
+        icon.setActivated(false);
+
         icon.setTag(imagePath);
 
     }

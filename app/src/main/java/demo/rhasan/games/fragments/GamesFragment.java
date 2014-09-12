@@ -16,6 +16,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.ResourceCursorAdapter;
 import android.widget.TextView;
@@ -38,7 +39,7 @@ import demo.rhasan.games.utils.Utils;
  * create an instance of this fragment.
  */
 public class GamesFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor>,
-        AdapterView.OnItemClickListener {
+        AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener {
     // TODO: Rename parameter arguments, choose names that match
     private static final int LOADER_ID = 0;
 
@@ -89,7 +90,13 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_games_list, container, false);
+        View view = inflater.inflate(R.layout.fragment_games_list, container, false);
+
+        ListView listView = (ListView) view.findViewById(R.id.lv_games);
+        listView.setOnItemClickListener(this);
+        listView.setOnItemLongClickListener(this);
+
+        return view;
     }
 
     @Override
@@ -105,7 +112,14 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
 
         setListAdapter(mAdapter);
         getLoaderManager().initLoader(LOADER_ID, null, this);
-        getListView().setOnItemClickListener(this);
+    }
+
+    @Override
+    public void onListItemClick(final ListView l, final View v, final int position, final long id) {
+        super.onListItemClick(l, v, position, id);
+        if (mListener != null) {
+            mListener.onGameItemClick(l, v, position, id);
+        }
     }
 
     @Override
@@ -164,6 +178,15 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
         }
     }
 
+    @Override
+    public boolean onItemLongClick(final AdapterView<?> adapterView, final View view, final int i, final long l) {
+        if (mListener != null) {
+            mListener.onLongGameItemClick(adapterView, view, i, l);
+        }
+
+        return true;
+    }
+
     /**
      * The below comments are generated automatically, nonetheless they should definitely
      * be followed!!!
@@ -180,6 +203,8 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
      */
     public interface OnFragmentInteractionListener {
         void onGameItemClick(AdapterView<?> adapterView, View v, int position, long id);
+
+        void onLongGameItemClick(AdapterView<?> adapterView, View view, int i, long l);
     }
 
 
@@ -201,7 +226,13 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
             console.setText(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_CONSOLE)));
 
             ImageView icon = (ImageView) view.findViewById(R.id.iv_game_icon);
-            icon.setImageURI(Uri.parse(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_ICON))));
+
+            String uriStr = cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_ICON));
+            if (uriStr == null || uriStr.isEmpty()) {
+                icon.setImageResource(R.drawable.ic_launcher);
+            } else {
+                icon.setImageURI(Uri.parse(uriStr));
+            }
 
             CheckBox finished = (CheckBox) view.findViewById(R.id.cb_game_finished);
             finished.setChecked(Utils.itob(cursor.getInt(cursor.getColumnIndex(GamesDatabase.GAME_FINISHED))));
@@ -218,8 +249,12 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
             console.setText(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_CONSOLE)));
 
             ImageView icon = (ImageView) view.findViewById(R.id.iv_game_icon);
-            icon.setImageURI(Uri.parse(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_ICON))));
-
+            String uriStr = cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_ICON));
+            if (uriStr == null || uriStr.isEmpty()) {
+                icon.setImageResource(R.drawable.ic_launcher);
+            } else {
+                icon.setImageURI(Uri.parse(uriStr));
+            }
             CheckBox finished = (CheckBox) view.findViewById(R.id.cb_game_finished);
             finished.setChecked(Utils.itob(cursor.getInt(cursor.getColumnIndex(GamesDatabase.GAME_FINISHED))));
 
@@ -245,7 +280,12 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
             console.setText(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_CONSOLE)));
 
             ImageView icon = (ImageView) view.findViewById(R.id.iv_game_icon);
-            icon.setImageURI(Uri.parse(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_ICON))));
+            String uriStr = cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_ICON));
+            if (uriStr == null || uriStr.isEmpty()) {
+                icon.setImageResource(R.drawable.ic_launcher);
+            } else {
+                icon.setImageURI(Uri.parse(uriStr));
+            }
 
             RatingBar rating = (RatingBar) view.findViewById(R.id.rb_game_rating);
             rating.setRating(Utils.stof(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_RATING))));
@@ -262,17 +302,15 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
             console.setText(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_CONSOLE)));
 
             ImageView icon = (ImageView) view.findViewById(R.id.iv_game_icon);
-            icon.setImageURI(Uri.parse(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_ICON))));
+            String uriStr = cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_ICON));
+            if (uriStr == null || uriStr.isEmpty()) {
+                icon.setImageResource(R.drawable.ic_launcher);
+            } else {
+                icon.setImageURI(Uri.parse(uriStr));
+            }
 
             RatingBar rating = (RatingBar) view.findViewById(R.id.rb_game_rating);
             rating.setRating(Utils.stof(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_RATING))));
-
-            rating.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
-                @Override
-                public void onRatingChanged(final RatingBar ratingBar, final float v, final boolean b) {
-
-                }
-            });
 
             return view;
         }

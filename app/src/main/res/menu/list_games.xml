@@ -1,16 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:tools="http://schemas.android.com/tools"
-      tools:context="demo.rhasan.games.activities.ListGamesActivity">
-
-
-    <item
-        android:id="@+id/action_edit_game"
-        android:title="@string/action_add_game"
-        android:orderInCategory="100"
-        android:showAsAction="always"
-        android:icon="@android:drawable/ic_menu_edit"/>
-    <item
-        android:id="@+id/action_add_game"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="demo.rhasan.games.activities.ListGamesActivity" >
+    <item android:id="@+id/action_add_game"
         android:title="@string/action_add_game"
         android:orderInCategory="100"
         android:showAsAction="always"

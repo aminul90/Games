@@ -44,6 +44,11 @@ public class RateGamesActivity extends Activity implements GamesFragment.OnFragm
         updateGameFromFragment(game);
     }
 
+    @Override
+    public void onLongGameItemClick(final AdapterView<?> adapterView, final View view, final int i, final long l) {
+
+    }
+
     private void updateGameFromFragment(final Game game) {
         ((GamesFragment)
                 getFragmentManager()

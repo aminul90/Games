@@ -21,5 +21,6 @@
     <string name="please_enter_game_name">Please enter the name of the game.</string>
     <string name="Notice">Notice</string>
     <string name="k">OK</string>
+    <string name="save">Save</string>
 
 </resources>
