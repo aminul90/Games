@@ -16,7 +16,10 @@
     <string name="cancel">Cancel</string>
     <string name="add">Add</string>
     <string name="form_hint_game_name">Name</string>
-    <string name="form_hint_game_icon">Icon</string>
+    <string name="form_hint_game_icon">Click upload</string>
     <string name="form_button_upload">upload</string>
+    <string name="please_enter_game_name">Please enter the name of the game.</string>
+    <string name="Notice">Notice</string>
+    <string name="k">OK</string>
 
 </resources>

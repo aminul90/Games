@@ -5,10 +5,11 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ListView;
+import android.widget.AdapterView;
 
 import demo.rhasan.games.R;
 import demo.rhasan.games.fragments.GamesFragment;
+import demo.rhasan.games.models.Game;
 
 public class RateGamesActivity extends Activity implements GamesFragment.OnFragmentInteractionListener {
 
@@ -38,7 +39,14 @@ public class RateGamesActivity extends Activity implements GamesFragment.OnFragm
     }
 
     @Override
-    public void onGameItemClick(final ListView l, final View v, final int position, final long id) {
-        // perform any controller/business related action here
+    public void onGameItemClick(final AdapterView<?> adapterView, final View v, final int position, final long id) {
+        Game game = (Game) adapterView.getItemAtPosition(position);
+        updateGameFromFragment(game);
+    }
+
+    private void updateGameFromFragment(final Game game) {
+        ((GamesFragment)
+                getFragmentManager()
+                        .findFragmentById(R.id.fragment_games)).updateGame(game);
     }
 }

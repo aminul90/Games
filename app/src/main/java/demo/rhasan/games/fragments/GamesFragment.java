@@ -7,14 +7,15 @@ import android.app.LoaderManager;
 import android.content.Context;
 import android.content.Loader;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.ResourceCursorAdapter;
 import android.widget.TextView;
@@ -26,7 +27,6 @@ import demo.rhasan.games.database.GamesDAO;
 import demo.rhasan.games.database.GamesDatabase;
 import demo.rhasan.games.database.GamesLoader;
 import demo.rhasan.games.models.Game;
-import demo.rhasan.games.utils.ImageUtils;
 import demo.rhasan.games.utils.Utils;
 
 /**
@@ -37,7 +37,8 @@ import demo.rhasan.games.utils.Utils;
  * Use the {@link GamesFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class GamesFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor> {
+public class GamesFragment extends ListFragment implements LoaderManager.LoaderCallbacks<Cursor>,
+        AdapterView.OnItemClickListener {
     // TODO: Rename parameter arguments, choose names that match
     private static final int LOADER_ID = 0;
 
@@ -54,7 +55,7 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
     private OnFragmentInteractionListener mListener;
     private ResourceCursorAdapter mAdapter;
     private GamesDAO mDatabase;
-    private int mFragmentType;
+    private int mFragmentType = -1;
 
     /**
      * Use this factory method to create a new instance of
@@ -80,6 +81,8 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
         if (getArguments() != null) {
 
         }
+
+        mDatabase = new GamesDAO(getActivity());
     }
 
     @Override
@@ -92,8 +95,6 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
     @Override
     public void onActivityCreated(final Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mDatabase = new GamesDAO(getActivity());
-
         if (mFragmentType == TYPE_RATE_GAME) {
             mAdapter = new GamesRatedCursorAdapter(
                     getActivity(), R.layout.fragment_games_rate_item, mDatabase.getCursor(), 0);
@@ -104,6 +105,7 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
 
         setListAdapter(mAdapter);
         getLoaderManager().initLoader(LOADER_ID, null, this);
+        getListView().setOnItemClickListener(this);
     }
 
     @Override
@@ -124,16 +126,9 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
     }
 
     @Override
-    public void onListItemClick(final ListView l, final View v, final int position, final long id) {
-        if (mListener != null) {
-            mListener.onGameItemClick(l, v, position, id);
-        }
-    }
-
-    @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         // Create a new CursorLoader with the following query parameters.
-        return new GamesLoader(getActivity());
+        return new GamesLoader(getActivity(), mDatabase);
     }
 
     @Override
@@ -154,8 +149,19 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
         mDatabase.addGame(game);
     }
 
+    public void updateGame(final Game game) {
+        mDatabase.updateGame(game);
+    }
+
     public void setType(final int fragmentType) {
         this.mFragmentType = fragmentType;
+    }
+
+    @Override
+    public void onItemClick(final AdapterView<?> adapterView, final View view, final int i, final long l) {
+        if (mListener != null) {
+            mListener.onGameItemClick(adapterView, view, i, l);
+        }
     }
 
     /**
@@ -173,7 +179,7 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        void onGameItemClick(ListView l, View v, int position, long id);
+        void onGameItemClick(AdapterView<?> adapterView, View v, int position, long id);
     }
 
 
@@ -195,11 +201,10 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
             console.setText(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_CONSOLE)));
 
             ImageView icon = (ImageView) view.findViewById(R.id.iv_game_icon);
-            icon.setImageDrawable(ImageUtils.loadImage(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_CONSOLE))));
+            icon.setImageURI(Uri.parse(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_ICON))));
 
             CheckBox finished = (CheckBox) view.findViewById(R.id.cb_game_finished);
-            finished.setChecked(Boolean.parseBoolean(
-                    String.valueOf(cursor.getInt(cursor.getColumnIndex(GamesDatabase.GAME_FINISHED)))));
+            finished.setChecked(Utils.itob(cursor.getInt(cursor.getColumnIndex(GamesDatabase.GAME_FINISHED))));
         }
 
         @Override
@@ -213,11 +218,10 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
             console.setText(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_CONSOLE)));
 
             ImageView icon = (ImageView) view.findViewById(R.id.iv_game_icon);
-            icon.setImageDrawable(ImageUtils.loadImage(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_CONSOLE))));
+            icon.setImageURI(Uri.parse(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_ICON))));
 
             CheckBox finished = (CheckBox) view.findViewById(R.id.cb_game_finished);
-            finished.setChecked(Boolean.parseBoolean(
-                    String.valueOf(cursor.getInt(cursor.getColumnIndex(GamesDatabase.GAME_FINISHED)))));
+            finished.setChecked(Utils.itob(cursor.getInt(cursor.getColumnIndex(GamesDatabase.GAME_FINISHED))));
 
             return view;
         }
@@ -241,7 +245,7 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
             console.setText(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_CONSOLE)));
 
             ImageView icon = (ImageView) view.findViewById(R.id.iv_game_icon);
-            icon.setImageDrawable(ImageUtils.loadImage(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_CONSOLE))));
+            icon.setImageURI(Uri.parse(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_ICON))));
 
             RatingBar rating = (RatingBar) view.findViewById(R.id.rb_game_rating);
             rating.setRating(Utils.stof(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_RATING))));
@@ -258,13 +262,21 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
             console.setText(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_CONSOLE)));
 
             ImageView icon = (ImageView) view.findViewById(R.id.iv_game_icon);
-            icon.setImageDrawable(ImageUtils.loadImage(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_CONSOLE))));
+            icon.setImageURI(Uri.parse(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_ICON))));
 
             RatingBar rating = (RatingBar) view.findViewById(R.id.rb_game_rating);
             rating.setRating(Utils.stof(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_RATING))));
 
+            rating.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+                @Override
+                public void onRatingChanged(final RatingBar ratingBar, final float v, final boolean b) {
+
+                }
+            });
+
             return view;
         }
+
     }
 
     @Override

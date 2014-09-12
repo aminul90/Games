@@ -41,13 +41,6 @@
         android:layout_below="@+id/tv_game_name"
         android:text="Xbox One"/>
 
-    <CheckBox
-        android:id="@+id/cb_game_finished"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:text="@string/checkbox_finished"/>
 
     <RatingBar
         android:id="@+id/rb_game_rating"
@@ -55,6 +48,6 @@
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"
         android:layout_centerVertical="true"
-        android:visibility="gone"/>
+        android:layout_toEndOf="@+id/iv_game_icon"/>
 
 </RelativeLayout>

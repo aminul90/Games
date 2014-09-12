@@ -45,13 +45,21 @@ public class GamesDAO {
 
         ContentValues values = new ContentValues();
 
+        String iconUri = null;
+        if (game.getIcon() != null)
+            iconUri = game.getIcon().toString();
+
+        String rating = String.valueOf(game.getRating());
+
         values.put(GamesDatabase.GAME_NAME, game.getName());
         values.put(GamesDatabase.GAME_CONSOLE, game.getConsole());
-        values.put(GamesDatabase.GAME_RATING, String.valueOf(game.getRating()));
+        values.put(GamesDatabase.GAME_RATING, rating);
         values.put(GamesDatabase.GAME_FINISHED, game.isFinished());
 
         if (game.getIcon() != null)
             values.put(GamesDatabase.GAME_ICON, game.getIcon().toString());
+        else
+            values.put(GamesDatabase.GAME_ICON, "");
 
         long gameId = database.insert(GamesDatabase.GAMES, null, values);
         Cursor cursor = database.query(GamesDatabase.GAMES,
@@ -67,7 +75,7 @@ public class GamesDAO {
         *
          */
         if (mObserver != null) {
-            mObserver.onContentChanged();
+            mObserver.onContentsChanged();
         }
 
         return newGame;
@@ -80,7 +88,7 @@ public class GamesDAO {
                 + " = " + id, null);
 
         if (mObserver != null) {
-            mObserver.onContentChanged();
+            mObserver.onContentsChanged();
         }
     }
 
@@ -89,13 +97,17 @@ public class GamesDAO {
 
         ContentValues values = new ContentValues();
 
+        String iconUri = game.getIcon().toString();
+        String rating = String.valueOf(game.getRating());
+
         values.put(GamesDatabase.GAME_NAME, game.getName());
         values.put(GamesDatabase.GAME_CONSOLE, game.getConsole());
-        values.put(GamesDatabase.GAME_RATING, String.valueOf(game.getRating()));
+        values.put(GamesDatabase.GAME_RATING, rating);
         values.put(GamesDatabase.GAME_FINISHED, game.isFinished());
-        values.put(GamesDatabase.GAME_ICON, game.getIcon().toString());
+        values.put(GamesDatabase.GAME_ICON, iconUri);
 
-        db.update(GamesDatabase.GAMES, values, "id=" + game.getId(), null);
+        db.update(GamesDatabase.GAMES,
+                values, "id=" + game.getId(), null);
     }
 
     public List getAllGames() {
@@ -116,8 +128,7 @@ public class GamesDAO {
     }
 
     public Cursor getCursor() {
-        String query = "SELECT * FROM " + GamesDatabase.GAMES +
-                " ORDER BY " + GamesDatabase.GAME_NAME + " ASC";
+        String query = "SELECT * FROM " + GamesDatabase.GAMES;
         return database.rawQuery(query, null);
     }
 
@@ -130,10 +141,14 @@ public class GamesDAO {
         String rating = cursor.getString(3);
         game.setRating(Utils.stof(rating));
 
-        game.setIsFinished(Utils.itob(cursor.getInt(3)));
+        boolean finished = Utils.itob(cursor.getInt(4));
+        game.setIsFinished(finished);
 
-        Uri uri = Uri.parse(cursor.getString(4));
-        game.setIcon(uri);
+        if (!cursor.getString(5).isEmpty()) {
+            String uriPath = cursor.getString(5);
+            Uri uri = Uri.parse(uriPath);
+            game.setIcon(uri);
+        }
 
         return game;
     }
@@ -149,6 +164,6 @@ public class GamesDAO {
     }
 
     public interface Observer {
-        public void onContentChanged();
+        public void onContentsChanged();
     }
 }

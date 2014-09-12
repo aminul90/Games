@@ -45,9 +45,9 @@
         android:id="@+id/cb_game_finished"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:text="@string/checkbox_finished"/>
+        android:text="@string/checkbox_finished"
+        android:layout_below="@+id/tv_game_console_label"
+        android:layout_toEndOf="@+id/iv_game_icon"/>
 
 
 </RelativeLayout>

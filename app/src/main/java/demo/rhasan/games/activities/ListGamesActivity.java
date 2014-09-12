@@ -7,20 +7,20 @@ import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.ListView;
 import android.widget.RatingBar;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -28,12 +28,12 @@ import android.widget.Toast;
 import demo.rhasan.games.R;
 import demo.rhasan.games.fragments.GamesFragment;
 import demo.rhasan.games.models.Game;
-import demo.rhasan.games.utils.Utils;
 
 
 public class ListGamesActivity extends Activity implements GamesFragment.OnFragmentInteractionListener {
 
     private static final int FILE_CHOSEN = 1;
+    private static final int FILE_CHOSEN_KIT_KAT = 2;
     private Dialog mFormDialog;
 
     @Override
@@ -74,6 +74,12 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
         return super.onOptionsItemSelected(item);
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        showGames();
+    }
+
     /**
      * Show the add game dialog form
      */
@@ -109,6 +115,15 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
                 CheckBox finished = (CheckBox) mFormDialog.findViewById(R.id.cb_form_game_finished);
                 RatingBar rating = (RatingBar) mFormDialog.findViewById(R.id.rb_form_game_rating);
 
+                // if name || console is empty
+                // error dialog
+                if (name.getText().toString().isEmpty()) {
+                    onInvalidForm();
+                    showGames();
+                    return;
+                }
+
+
                 Game game = new Game();
                 game.setName(name.getText().toString());
                 game.setConsole((String) console.getSelectedItem());
@@ -122,21 +137,22 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
                     }
                 }
 
-                ((GamesFragment)
-                        getFragmentManager()
-                                .findFragmentById(R.id.fragment_games)).addGame(game);
+                addGameToFragment(game);
                 dialog.dismiss();
+
                 showGames();
             }
-        });
-        builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
+
+
         });
 
         mFormDialog = builder.create();
+        mFormDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+            @Override
+            public void onCancel(final DialogInterface dialogInterface) {
+                showGames();
+            }
+        });
 
         Window window = mFormDialog.getWindow();
         WindowManager.LayoutParams wlp = window.getAttributes();
@@ -148,23 +164,51 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
         mFormDialog.show();
     }
 
+    private void addGameToFragment(final Game game) {
+        ((GamesFragment)
+                getFragmentManager()
+                        .findFragmentById(R.id.fragment_games)).addGame(game);
+    }
+
+    private void updateGameFromFragment(final Game game) {
+        ((GamesFragment)
+                getFragmentManager()
+                        .findFragmentById(R.id.fragment_games)).updateGame(game);
+    }
+
+    private void onInvalidForm() {
+        Toast.makeText(this, getString(R.string.please_enter_game_name),
+                Toast.LENGTH_LONG).show();
+    }
+
     private void initializeFormlayout(final View layout) {
         Button upload = (Button) layout.findViewById(R.id.btn_form_upload);
         upload.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View view) {
-                Intent intent = new Intent();
-                intent.setType("image/*");
-                intent.setAction(Intent.ACTION_GET_CONTENT);
-                startActivityForResult(Intent.createChooser(intent, "Select file to upload "),
-                        FILE_CHOSEN);
+                // tested on nexus 5, 4.4
+                // system dialog way should be loaded
+                // or URI won't persist right in the database
+                // the rights go away
+                if (Build.VERSION.SDK_INT < 19) {
+                    Intent intent = new Intent();
+                    intent.setType("image/*");
+                    intent.setAction(Intent.ACTION_GET_CONTENT);
+                    startActivityForResult(Intent.createChooser(intent, "Select file to upload "),
+                            FILE_CHOSEN);
+                } else {
+                    Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                    intent.setType("image/*");
+                    startActivityForResult(intent, FILE_CHOSEN_KIT_KAT);
+                }
             }
         });
     }
 
     @Override
-    public void onGameItemClick(final ListView l, final View v, final int position, final long id) {
-
+    public void onGameItemClick(final AdapterView<?> l, final View v, final int position, final long id) {
+        Game game = (Game) l.getItemAtPosition(position);
+        updateGameFromFragment(game);
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -172,6 +216,7 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
 
         switch (requestCode) {
             case FILE_CHOSEN:
+            case FILE_CHOSEN_KIT_KAT:
                 Uri imagePath = data.getData();
                 onIconUpload(imagePath);
                 break;
@@ -185,15 +230,10 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
         EditText icon = (EditText) mFormDialog.findViewById(R.id.et_form_game_icon);
 
         // so users don't set default paths
-        icon.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(final View view, final MotionEvent motionEvent) {
-                return true;
-            }
-        });
+        icon.setMaxLines(0);
 
         icon.setText(imagePath.getPath());
-        icon.setTag(Utils.getPath(imagePath, this));
+        icon.setTag(imagePath);
 
     }
 

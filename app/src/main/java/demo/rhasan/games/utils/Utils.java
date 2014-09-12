@@ -23,7 +23,7 @@ public class Utils {
     }
 
     public static boolean itob(final int anInt) {
-        return Boolean.parseBoolean(String.valueOf(anInt));
+        return (anInt > 0);
     }
 
     public static float stof(final String aString) {

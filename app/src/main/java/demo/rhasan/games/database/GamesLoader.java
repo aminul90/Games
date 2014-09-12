@@ -10,9 +10,10 @@ public class GamesLoader extends AsyncTaskLoader<Cursor> implements
     private Cursor mData;
     private GamesDAO mDatabase;
 
-    public GamesLoader(Context ctx) {
+    public GamesLoader(Context ctx, final GamesDAO database) {
         super(ctx);
-        mDatabase = new GamesDAO(ctx);
+        mDatabase = database;
+        mDatabase.registerObserver(this);
     }
 
 
@@ -25,7 +26,7 @@ public class GamesLoader extends AsyncTaskLoader<Cursor> implements
     @Override
     public void deliverResult(Cursor data) {
         if (isReset()) {
-            releaseResources(data);
+            release(data);
             return;
         }
 
@@ -36,7 +37,7 @@ public class GamesLoader extends AsyncTaskLoader<Cursor> implements
             super.deliverResult(data);
         }
         if (oldData != null && oldData != data) {
-            releaseResources(oldData);
+            release(oldData);
         }
     }
 
@@ -45,9 +46,6 @@ public class GamesLoader extends AsyncTaskLoader<Cursor> implements
         if (mData != null) {
             deliverResult(mData);
         }
-
-        mDatabase.registerObserver(this);
-
 
         if (takeContentChanged() || mData == null) {
             forceLoad();
@@ -64,7 +62,7 @@ public class GamesLoader extends AsyncTaskLoader<Cursor> implements
         // Ensure the loader has been stopped.
         onStopLoading();
         if (mData != null) {
-            releaseResources(mData);
+            release(mData);
             mData = null;
         }
 
@@ -76,10 +74,15 @@ public class GamesLoader extends AsyncTaskLoader<Cursor> implements
     @Override
     public void onCanceled(Cursor data) {
         super.onCanceled(data);
-        releaseResources(data);
+        release(data);
     }
 
-    private void releaseResources(Cursor data) {
+    private void release(Cursor data) {
         if (data != null) data.close();
+    }
+
+    @Override
+    public void onContentsChanged() {
+        onContentChanged();
     }
 }
