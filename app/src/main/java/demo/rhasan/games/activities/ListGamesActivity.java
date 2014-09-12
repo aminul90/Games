@@ -115,14 +115,6 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
                 CheckBox finished = (CheckBox) mFormDialog.findViewById(R.id.cb_form_game_finished);
                 RatingBar rating = (RatingBar) mFormDialog.findViewById(R.id.rb_form_game_rating);
 
-                // if name || console is empty
-                // error dialog
-                if (name.getText().toString().isEmpty()) {
-                    onInvalidForm();
-                    showGames();
-                    return;
-                }
-
 
                 Game game = new Game();
                 game.setName(name.getText().toString());
@@ -174,11 +166,6 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
         ((GamesFragment)
                 getFragmentManager()
                         .findFragmentById(R.id.fragment_games)).updateGame(game);
-    }
-
-    private void onInvalidForm() {
-        Toast.makeText(this, getString(R.string.please_enter_game_name),
-                Toast.LENGTH_LONG).show();
     }
 
     private void initializeFormlayout(final View layout) {
