@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RatingBar;
@@ -105,6 +106,7 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
         if (mFragmentType == TYPE_RATE_GAME) {
             mAdapter = new GamesRatedCursorAdapter(
                     getActivity(), R.layout.fragment_games_rate_item, mDatabase.getCursor(), 0);
+            getListView().setClickable(false);
         } else {
             mAdapter = new GamesFinishedCursorAdapter(
                     getActivity(), R.layout.fragment_games_finished_item, mDatabase.getCursor(), 0);
@@ -181,10 +183,16 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
     @Override
     public boolean onItemLongClick(final AdapterView<?> adapterView, final View view, final int i, final long l) {
         if (mListener != null) {
-            mListener.onLongGameItemClick(adapterView, view, i, l);
+            mListener.onLongGameItemClick(adapterView, view, i, l, (Game)view.getTag());
         }
 
         return true;
+    }
+
+    public void reload() {
+        if (mAdapter != null) {
+            mAdapter.notifyDataSetChanged();
+        }
     }
 
     /**
@@ -204,7 +212,9 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
     public interface OnFragmentInteractionListener {
         void onGameItemClick(AdapterView<?> adapterView, View v, int position, long id);
 
-        void onLongGameItemClick(AdapterView<?> adapterView, View view, int i, long l);
+        void onLongGameItemClick(AdapterView<?> adapterView, View view, int i, long l, final Game tag);
+
+        void onGameModelChanged(Game game);
     }
 
 
@@ -218,7 +228,9 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
         }
 
         @Override
-        public void bindView(View view, Context context, Cursor cursor) {
+        public void bindView(final View view, Context context, Cursor cursor) {
+            view.setTag(GamesDAO.toGame(cursor));
+
             TextView name = (TextView) view.findViewById(R.id.tv_game_name);
             name.setText(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_NAME)));
 
@@ -232,15 +244,31 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
                 icon.setImageResource(R.drawable.ic_launcher);
             } else {
                 icon.setImageURI(Uri.parse(uriStr));
+
+                if (icon.getDrawable() == null) {
+                    icon.setImageResource(R.drawable.ic_launcher);
+                }
             }
 
-            CheckBox finished = (CheckBox) view.findViewById(R.id.cb_game_finished);
+            final CheckBox finished = (CheckBox) view.findViewById(R.id.cb_game_finished);
             finished.setChecked(Utils.itob(cursor.getInt(cursor.getColumnIndex(GamesDatabase.GAME_FINISHED))));
+            finished.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(final CompoundButton compoundButton, final boolean b) {
+                    Game game = (Game) view.getTag();
+                    game.setIsFinished(b);
+
+                    if (mListener != null) {
+                        mListener.onGameModelChanged(game);
+                    }
+                }
+            });
         }
 
         @Override
         public View newView(final Context context, final Cursor cursor, final ViewGroup parent) {
-            View view = LayoutInflater.from(context).inflate(R.layout.fragment_games_finished_item, parent, false);
+            final View view = LayoutInflater.from(context).inflate(R.layout.fragment_games_finished_item, parent, false);
+            view.setTag(GamesDAO.toGame(cursor));
 
             TextView name = (TextView) view.findViewById(R.id.tv_game_name);
             name.setText(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_NAME)));
@@ -254,12 +282,28 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
                 icon.setImageResource(R.drawable.ic_launcher);
             } else {
                 icon.setImageURI(Uri.parse(uriStr));
+
+                if (icon.getDrawable() == null) {
+                    icon.setImageResource(R.drawable.ic_launcher);
+                }
             }
             CheckBox finished = (CheckBox) view.findViewById(R.id.cb_game_finished);
             finished.setChecked(Utils.itob(cursor.getInt(cursor.getColumnIndex(GamesDatabase.GAME_FINISHED))));
+            finished.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(final CompoundButton compoundButton, final boolean b) {
+                    Game game = (Game) view.getTag();
+                    game.setIsFinished(b);
+
+                    if (mListener != null) {
+                        mListener.onGameModelChanged(game);
+                    }
+                }
+            });
 
             return view;
         }
+
     }
 
     /**
@@ -272,7 +316,9 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
         }
 
         @Override
-        public void bindView(View view, Context context, Cursor cursor) {
+        public void bindView(final View view, Context context, Cursor cursor) {
+            view.setTag(GamesDAO.toGame(cursor));
+
             TextView name = (TextView) view.findViewById(R.id.tv_game_name);
             name.setText(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_NAME)));
 
@@ -285,15 +331,35 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
                 icon.setImageResource(R.drawable.ic_launcher);
             } else {
                 icon.setImageURI(Uri.parse(uriStr));
+
+                if (icon.getDrawable() == null) {
+                    icon.setImageResource(R.drawable.ic_launcher);
+                }
             }
 
             RatingBar rating = (RatingBar) view.findViewById(R.id.rb_game_rating);
             rating.setRating(Utils.stof(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_RATING))));
+            rating.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+                @Override
+                public void onRatingChanged(final RatingBar ratingBar, final float v, final boolean b) {
+                    Game game = (Game) view.getTag();
+                    game.setRating(v);
+
+                    if (mListener != null) {
+                        mListener.onGameModelChanged(game);
+                    }
+                }
+            });
         }
 
         @Override
         public View newView(final Context context, final Cursor cursor, final ViewGroup parent) {
-            View view = LayoutInflater.from(context).inflate(R.layout.fragment_games_rate_item, parent, false);
+            /*
+            Tag views with their models in case models require on update from it's coressponding view's
+            input events
+             */
+            final View view = LayoutInflater.from(context).inflate(R.layout.fragment_games_rate_item, parent, false);
+            view.setTag(GamesDAO.toGame(cursor));
 
             TextView name = (TextView) view.findViewById(R.id.tv_game_name);
             name.setText(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_NAME)));
@@ -307,10 +373,25 @@ public class GamesFragment extends ListFragment implements LoaderManager.LoaderC
                 icon.setImageResource(R.drawable.ic_launcher);
             } else {
                 icon.setImageURI(Uri.parse(uriStr));
+
+                if (icon.getDrawable() == null) {
+                    icon.setImageResource(R.drawable.ic_launcher);
+                }
             }
 
             RatingBar rating = (RatingBar) view.findViewById(R.id.rb_game_rating);
             rating.setRating(Utils.stof(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_RATING))));
+            rating.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+                @Override
+                public void onRatingChanged(final RatingBar ratingBar, final float v, final boolean b) {
+                    Game game = (Game) view.getTag();
+                    game.setRating(v);
+
+                    if (mListener != null) {
+                        mListener.onGameModelChanged(game);
+                    }
+                }
+            });
 
             return view;
         }

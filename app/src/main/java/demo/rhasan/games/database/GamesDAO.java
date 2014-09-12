@@ -97,17 +97,28 @@ public class GamesDAO {
 
         ContentValues values = new ContentValues();
 
-        String iconUri = game.getIcon().toString();
+        String iconUri = null;
+        if (game.getIcon() != null)
+            iconUri = game.getIcon().toString();
+
         String rating = String.valueOf(game.getRating());
 
         values.put(GamesDatabase.GAME_NAME, game.getName());
         values.put(GamesDatabase.GAME_CONSOLE, game.getConsole());
         values.put(GamesDatabase.GAME_RATING, rating);
         values.put(GamesDatabase.GAME_FINISHED, game.isFinished());
-        values.put(GamesDatabase.GAME_ICON, iconUri);
+
+        if (game.getIcon() != null)
+            values.put(GamesDatabase.GAME_ICON, game.getIcon().toString());
+        else
+            values.put(GamesDatabase.GAME_ICON, "");
+
+        if (mObserver != null) {
+            mObserver.onContentsChanged();
+        }
 
         db.update(GamesDatabase.GAMES,
-                values, "id=" + game.getId(), null);
+                values, "_id=" + game.getId(), null);
     }
 
     public List getAllGames() {
@@ -163,7 +174,43 @@ public class GamesDAO {
         }
     }
 
+    public Cursor getCursorById(final Integer id) {
+        Cursor cursor = database.rawQuery("select * from " + GamesDatabase.GAMES + " where "
+                + GamesDatabase.GAME_ID + "='" + id + "'", null);
+        cursor.moveToFirst();
+
+        return cursor;
+    }
+
     public interface Observer {
         public void onContentsChanged();
+    }
+
+    public static Game toGame(final Cursor cursor) {
+        Game game = new Game();
+
+        int id = (cursor.getInt(cursor.getColumnIndex(GamesDatabase.GAME_ID)));
+        game.setId(id);
+
+        String name = (cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_NAME)));
+        game.setName(name);
+
+        String console = (cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_CONSOLE)));
+        game.setConsole(console);
+
+        String uriStr = cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_ICON));
+        if (uriStr == null || uriStr.isEmpty()) {
+            game.setIcon(null);
+        } else {
+            game.setIcon((Uri.parse(uriStr)));
+        }
+
+        boolean finished = (Utils.itob(cursor.getInt(cursor.getColumnIndex(GamesDatabase.GAME_FINISHED))));
+        game.setIsFinished(finished);
+
+        float rating = Utils.stof(cursor.getString(cursor.getColumnIndex(GamesDatabase.GAME_RATING)));
+        game.setRating(rating);
+
+        return game;
     }
 }

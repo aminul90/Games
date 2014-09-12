@@ -40,13 +40,18 @@ public class RateGamesActivity extends Activity implements GamesFragment.OnFragm
 
     @Override
     public void onGameItemClick(final AdapterView<?> adapterView, final View v, final int position, final long id) {
-        Game game = (Game) adapterView.getItemAtPosition(position);
-        updateGameFromFragment(game);
+        // Application logic
     }
 
     @Override
-    public void onLongGameItemClick(final AdapterView<?> adapterView, final View view, final int i, final long l) {
+    public void onLongGameItemClick(final AdapterView<?> adapterView, final View view, final int i, final long l, final Game tag) {
+        // Application logic
+    }
 
+    @Override
+    public void onGameModelChanged(final Game game) {
+        // Update sqllite
+        updateGameFromFragment(game);
     }
 
     private void updateGameFromFragment(final Game game) {

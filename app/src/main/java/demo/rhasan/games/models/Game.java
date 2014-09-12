@@ -17,7 +17,7 @@ public class Game {
     private Uri iconPath;
     private boolean mIsFinished;
     private float mRating = 0.0f;
-    private long mId;
+    private int mId;
 
     public String getName() {
         return mName;
@@ -59,11 +59,11 @@ public class Game {
         this.iconPath = iconPath;
     }
 
-    public void setId(final long id) {
+    public void setId(final int id) {
         this.mId = id;
     }
 
-    public long getId() {
+    public int getId() {
         return mId;
     }
 

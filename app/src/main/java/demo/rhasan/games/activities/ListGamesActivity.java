@@ -194,13 +194,17 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
 
     @Override
     public void onGameItemClick(final AdapterView<?> l, final View v, final int position, final long id) {
-        Game game = (Game) l.getItemAtPosition(position);
-        updateGameFromFragment(game);
+        // application logic here
     }
 
     @Override
-    public void onLongGameItemClick(final AdapterView<?> adapterView, final View view, final int i, final long l) {
-        showEditGameForm((Game) adapterView.getItemAtPosition(i));
+    public void onLongGameItemClick(final AdapterView<?> adapterView, final View view, final int i, final long l, final Game game) {
+        showEditGameForm(game);
+    }
+
+    @Override
+    public void onGameModelChanged(Game game) {
+        updateGameFromFragment(game);
     }
 
     private void showEditGameForm(final Game game) {
@@ -218,23 +222,29 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
                 CheckBox finished = (CheckBox) layout.findViewById(R.id.cb_form_game_finished);
                 RatingBar rating = (RatingBar) layout.findViewById(R.id.rb_form_game_rating);
 
-                Game game = new Game();
-                game.setName(name.getText().toString());
-                game.setConsole((String) console.getSelectedItem());
-                game.setIsFinished(finished.isChecked());
-                game.setRating(rating.getRating());
+                Game updatedGame = new Game();
+                updatedGame.setId(game.getId());
+                updatedGame.setName(name.getText().toString());
+                updatedGame.setConsole((String) console.getSelectedItem());
+                updatedGame.setIsFinished(finished.isChecked());
+                updatedGame.setRating(rating.getRating());
 
                 if (icon.getText() != null &&
                         !icon.getText().toString().isEmpty()) {
-                    if (icon.getTag() != null) {
-                        game.setIcon((Uri) icon.getTag());
+                    // same images
+                    if (game.getIcon().getPath()
+                            .equals(icon.getText().toString())) {
+                        updatedGame.setIcon(game.getIcon());
+                    } else if (icon.getTag() != null) {
+                        Uri uri = (Uri) icon.getTag();
+                        updatedGame.setIcon(uri);
                     }
                 }
 
-                addGameToFragment(game);
+                updateGameFromFragment(updatedGame);
                 dialog.dismiss();
 
-                showGames();
+                reloadGames();
             }
         });
 
@@ -256,7 +266,15 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
         mFormDialog.show();
     }
 
+    private void reloadGames() {
+        ((GamesFragment)
+                getFragmentManager()
+                        .findFragmentById(R.id.fragment_games)).reload();
+    }
+
     private void initializeFormlayoutData(final View layout, Game game) {
+        initializeFormlayout(layout);
+
         EditText icon = (EditText) layout.findViewById(R.id.et_form_game_icon);
         EditText name = (EditText) layout.findViewById(R.id.et_form_game_name);
         Spinner console = (Spinner) layout.findViewById(R.id.spin_form_game_console);
@@ -279,6 +297,9 @@ public class ListGamesActivity extends Activity implements GamesFragment.OnFragm
                 console.setSelection(2);
             }
         }
+
+        finished.setChecked(game.isFinished());
+        rating.setRating(game.getRating());
 
     }
 
